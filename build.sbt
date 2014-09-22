@@ -15,27 +15,14 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= Seq(
- "org.apache.spark" %% "spark-core" % "1.0.2",
-  "org.apache.spark" %% "spark-streaming-kafka" % "1.0.2",
-  "org.apache.spark" %% "spark-streaming-twitter" % "1.0.2",
-  //"org.apache.spark" %% "spark-catalyst" % "1.0.2",
-  //"org.apache.spark" %% "spark-streaming" % "1.0.2",
-  //"org.apache.spark" %% "spark-mllib" % "1.0.2",
-  //"org.apache.spark" %% "spark-sql" % "1.0.2",
-  "org.apache.spark" %% "spark-graphx" % "1.0.2"
-)
-
-libraryDependencies ++= Seq(
-  ("org.apache.spark" %% "spark-core" % "1.0.2").
-    exclude("org.eclipse.jetty.orbit", "javax.servlet").
-    exclude("org.eclipse.jetty.orbit", "javax.transaction").
-    exclude("org.eclipse.jetty.orbit", "javax.mail").
-    exclude("org.eclipse.jetty.orbit", "javax.activation").
-    exclude("org.mortbay.jetty", "servlet-api").
-    exclude("commons-beanutils", "commons-beanutils-core").
-    exclude("commons-collections", "commons-collections").
-    exclude("commons-collections", "commons-collections").
-    exclude("com.esotericsoftware.minlog", "minlog")
+ "org.apache.spark" %% "spark-core" % "1.0.2" %  "provided",
+  "org.apache.spark" %% "spark-streaming-kafka" % "1.0.2" %  "provided",
+  "org.apache.spark" %% "spark-streaming-twitter" % "1.0.2" %  "provided",
+  //"org.apache.spark" %% "spark-catalyst" % "1.0.2" %  "provided",
+  //"org.apache.spark" %% "spark-streaming" % "1.0.2" %  "provided",
+  //"org.apache.spark" %% "spark-mllib" % "1.0.2" %  "provided",
+  //"org.apache.spark" %% "spark-sql" % "1.0.2" %  "provided",
+  "org.apache.spark" %% "spark-graphx" % "1.0.2" %  "provided"
 )
 
 assemblySettings 

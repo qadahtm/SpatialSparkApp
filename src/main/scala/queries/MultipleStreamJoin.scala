@@ -268,27 +268,7 @@ object MultipleStreamJoinNetwork extends App with Logging {
   }
    
    // debug prining
-//  output.print()
-
-  // output  
-  output.foreachRDD(rdd => {
-
-    rdd.foreachPartition(partitionOfRecords => {
-
-      val producer = Helper.createKafkaProducer()
-
-      partitionOfRecords.map {
-        record =>
-          {
-        	  val data = new KeyedMessage[String, String](outTopic, record)
-			  producer.send(data)
-          }
-      }
-
-      producer.close
-    })
-
-  })
+  output.print()
 
   ssc.start()
   ssc.awaitTermination()

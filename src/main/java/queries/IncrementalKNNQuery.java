@@ -3,7 +3,6 @@ package queries;
 import scala.Tuple2;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
@@ -86,13 +85,10 @@ public final class IncrementalKNNQuery {
        }
      });
     
-    
-
-    
-    //reduce for quereies with same id
+    //TODO:reduce for queries with same id
     
     
-    //First map (user_id, (TweetRecord, Date)) --> ReduceByMaxDate() --> (userID, (lat,long))
+    //First map (1, TweetRecord) for each tweet
     JavaPairDStream<Integer, TweetRecord> tupleRDD = 
     		tuples.mapToPair(new PairFunction<TweetRecord, Integer, TweetRecord>(){
     		    public Tuple2<Integer, TweetRecord> call(TweetRecord record){
@@ -103,7 +99,7 @@ public final class IncrementalKNNQuery {
     		    
     		});
     
-    //First map (user_id, (TweetRecord, Date)) --> ReduceByMaxDate() --> (userID, (lat,long))
+    //Then map (1, KNNQuery) for each query
     JavaPairDStream<Integer, KNNQuery> queryRDD = 
     		queryTuples.mapToPair(new PairFunction<KNNQuery, Integer, KNNQuery>(){
     		    public Tuple2<Integer, KNNQuery> call(KNNQuery q){
@@ -114,6 +110,7 @@ public final class IncrementalKNNQuery {
     		    
     		});
     
+    //Function to retain state of total queries
     Function2<List<KNNQuery>, Optional<List<KNNQuery>>, Optional<List<KNNQuery>>> updateFunction =
     		  new Function2<List<KNNQuery>, Optional<List<KNNQuery>>, Optional<List<KNNQuery>>>() {
     		    @Override 
@@ -131,12 +128,11 @@ public final class IncrementalKNNQuery {
     		      return Optional.of(newState);
     		    }
     		  };
-    		  
-  	 totalqueries = queryRDD.updateStateByKey(updateFunction);
-  	 
-  	 totalqueries.print();
     
+    //Add new queries to total queries
+  	totalqueries = queryRDD.updateStateByKey(updateFunction);
     
+  	//join queries by id for now print..later output will be (Query_ID,List<TweetRecord> topKNNs) 
     tupleRDD.join(totalqueries).foreachRDD(
     		new Function<JavaPairRDD<Integer,Tuple2<TweetRecord,List<KNNQuery>>>, Void>() {
 
@@ -150,10 +146,7 @@ public final class IncrementalKNNQuery {
 							LocationUpdate locationUpdate = new LocationUpdate(tr.getUserId(),(int)tr.getGeoLat(), (int)tr.getGeoLong());
 							ArrayList<String> changes = q.processLocationUpdate(locationUpdate);
 								for (String str : changes) {
-									if (str.charAt(0) == '-')
-										System.out.println(str);
-									else
-										System.out.println(str);
+									System.out.println(str);
 								}
 						}
 					}
@@ -164,12 +157,6 @@ public final class IncrementalKNNQuery {
 
     ssc.start();
     ssc.awaitTermination();
-  }
-  
-  
-  
-  static void filterData(final LocationUpdate locationUpdate, final KNNQuery q,  final boolean printUpdates) {
-
   }
   
 }

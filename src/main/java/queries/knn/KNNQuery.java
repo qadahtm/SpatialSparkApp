@@ -3,17 +3,19 @@ package queries.knn;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.PriorityQueue;
 
+import scala.Serializable;
 import helpers.LocationUpdate;
 
-public class KNNQuery {
+public class KNNQuery implements Serializable{
 	private int queryID;
 	private int focalXCoord, focalYCoord;
 	private int k;
 	
 	PriorityQueue<LocationUpdate> kNNQueue;  // Priority queue (max-heap).
-	HashMap<Integer, Integer> currentRanks;  // Records the current rank of each object in the top-k list.
+	HashMap<Long, Integer> currentRanks;  // Records the current rank of each object in the top-k list.
 		
 	// Retrieves the distance of the farthest object in the current top-k.
 	public double getFarthestDistance() {
@@ -53,11 +55,15 @@ public class KNNQuery {
 	public void setFocalYCoord(int focalYCoord) {
 		this.focalYCoord = focalYCoord;
 	}
+	public List<Integer> getCurrentRanks(){
+		
+		return (List<Integer>) currentRanks.values();
+	}
 	
 	public KNNQuery(int id, int focalXCoord, int focalYCoord, int k) {
 		Comparator<LocationUpdate> maxHeap = new MaxHeap(focalXCoord, focalYCoord);
 		this.kNNQueue = new PriorityQueue<LocationUpdate>(50, maxHeap);
-		this.currentRanks = new HashMap<Integer, Integer>();
+		this.currentRanks = new HashMap<Long, Integer>();
 		
 		this.queryID = id;
 	
@@ -111,7 +117,7 @@ public class KNNQuery {
 	// and object, or the change of a rank of an object
 	private ArrayList<String> getTopkUpdates() {
 		// Calculate the new rank of each object in the top-k list.
-		HashMap<Integer, Integer> newRanks = new HashMap<Integer, Integer>();
+		HashMap<Long, Integer> newRanks = new HashMap<Long, Integer>();
 		int rank = 1;
 		for (LocationUpdate l : this.kNNQueue) {
 			newRanks.put(l.getObjectId(), rank);
@@ -120,14 +126,14 @@ public class KNNQuery {
 
 		ArrayList<String> changes = new ArrayList<String>();
 		// Compare the new ranks with the existing (i.e., old) ranks.
-		for (Integer objectId : newRanks.keySet()) {
+		for (Long objectId : newRanks.keySet()) {
 			if (!this.currentRanks.containsKey(objectId)) {
 				changes.add("+ Object " + objectId + " with Rank " + newRanks.get(objectId) +" for Query " + this.queryID );
 			} else if (this.currentRanks.get(objectId) != newRanks.get(objectId)) {
 				changes.add("U Object " + objectId + " with Rank " + newRanks.get(objectId) +" for Query " + this.queryID );
 			}
 		}
-		for (Integer objectId : this.currentRanks.keySet()) {
+		for (Long objectId : this.currentRanks.keySet()) {
 			if (!newRanks.containsKey(objectId)) {
 				changes.add("- Object " + objectId +" for Query " + this.queryID );
 			}
@@ -140,7 +146,7 @@ public class KNNQuery {
 	}
 	
 	// This is an internal class that is used to order the objects according to the Euclidean distance using a priority queue.
-	public static class MaxHeap implements Comparator<LocationUpdate>{
+	public static class MaxHeap implements Comparator<LocationUpdate>, Serializable{
 		private int focalXCoord, focalYCoord;
 		
 		public MaxHeap(int focalXCoord, int focalYCoord) {

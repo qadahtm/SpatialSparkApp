@@ -146,7 +146,7 @@ public class KNNQuery implements Serializable{
 	}
 	
 	// This is an internal class that is used to order the objects according to the Euclidean distance using a priority queue.
-	public static class MaxHeap implements Comparator<LocationUpdate>, Serializable{
+	public class MaxHeap implements Comparator<LocationUpdate>, Serializable{
 		private int focalXCoord, focalYCoord;
 		
 		public MaxHeap(int focalXCoord, int focalYCoord) {

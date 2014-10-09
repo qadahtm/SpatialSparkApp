@@ -13,29 +13,17 @@ public class TweetRecord implements Serializable {
   private double geoLat;
   private double geoLong;
   private String tweetText;
-  private String source;
-  private int userId;
-  private int coordinated;
+  private long userId;
   private SimpleDateFormat sdf;
   
-	public TweetRecord(long tweetId, String createdAt, double geoLat, double geoLong, int userId){
-		this.tweetId = tweetId;
-  		this.createdAt = createdAt;
-  		this.geoLat = geoLat;
-  		this.geoLong = geoLong;
- 		this.userId = userId;
- 		sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	}
 
-	public TweetRecord(long tweetId, String createdAt, double geoLat, double geoLong, String tweetText, String source, int userId, int coordinated){
+	public TweetRecord(long tweetId, String createdAt, double geoLat, double geoLong, long userId, String tweetText){
 		this.tweetId = tweetId;
   		this.createdAt = createdAt;
   		this.geoLat = geoLat;
   		this.geoLong = geoLong;
  		this.tweetText = tweetText;
- 		this.source = source;
  		this.userId = userId;
- 		this.coordinated = coordinated;
  		sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	}
 	public long getTweetId(){
@@ -66,14 +54,8 @@ public class TweetRecord implements Serializable {
 	public String getTweetText(){
 		return tweetText;
 	}
-	public String getSource() {
-		return source;
-	}
-	public int getUserId() {
+
+	public long getUserId() {
 		return userId;
-	}
-	
-	public int getCoordinated() {
-		return coordinated;
 	}
 }

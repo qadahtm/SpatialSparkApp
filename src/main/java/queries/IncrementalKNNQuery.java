@@ -77,10 +77,15 @@ public final class IncrementalKNNQuery {
     tuples = lines.map(new Function<String, TweetRecord>() {
     	public TweetRecord call(String line) throws Exception {
  
-         String[] fields = line.split(" ");
+         String[] fields = line.split(",",6);
 
          TweetRecord sd = new TweetRecord(
-        		 Long.parseLong(fields[0]), fields[1] + fields[2], Double.parseDouble(fields[3]),  Double.parseDouble(fields[4]), Integer.parseInt(fields[fields.length-2]));
+        		 Long.parseLong(fields[0]), 
+        		 fields[1], 
+        		 Double.parseDouble(fields[2]),  
+        		 Double.parseDouble(fields[3]), 
+        		 Long.parseLong(fields[4]),
+        		 fields[5]);
          return sd;
        }
      });
@@ -145,7 +150,7 @@ public final class IncrementalKNNQuery {
 						for(KNNQuery q: queries){
 							LocationUpdate locationUpdate = new LocationUpdate(tr.getUserId(),(int)tr.getGeoLat(), (int)tr.getGeoLong());
 							ArrayList<String> changes = q.processLocationUpdate(locationUpdate);
-								for (String str : changes) {
+								for (Integer str : q.getCurrentRanks()) {
 									System.out.println(str);
 								}
 						}

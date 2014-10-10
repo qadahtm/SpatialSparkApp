@@ -13,9 +13,11 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
  "org.apache.spark" %% "spark-core" % "1.1.0" %  "provided",
- "log4j" % "log4j" % "1.2.14",
+  "org.apache.spark" %% "spark-streaming-kafka" % "1.1.0" %  "provided",
+  "org.apache.spark" %% "spark-streaming-twitter" % "1.1.0" %  "provided",
   "joda-time"		    % "joda-time" 		% "latest.integration",
-  "org.joda" 			% "joda-convert" 	% "latest.integration"
+  "org.joda" 			% "joda-convert" 	% "latest.integration",
+  "log4j" % "log4j" % "1.2.14"
 )
 
 assemblySettings 

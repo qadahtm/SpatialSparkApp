@@ -1,6 +1,10 @@
 SpatialSparkApp
 ===============
 
+## Update
+
+Now we have a bit more cleaned up build.sbt file. In addition, we have lancher sbt file. This is a shell script that will download sbt if not installed on the machine so that we can have the master branch ready for execution on any machine regardless if SBT is installed or not. 
+
 ## Introduction
 
 This repository will be used as a codebase for our efforts to realize spatio-temporal queries on top of Spark-Streaming. 

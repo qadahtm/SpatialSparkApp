@@ -17,8 +17,12 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-streaming-twitter" % "1.1.0" %  "provided",
   "joda-time"		    % "joda-time" 		% "latest.integration",
   "org.joda" 			% "joda-convert" 	% "latest.integration",
-  "log4j" % "log4j" % "1.2.14"
+  "log4j" % "log4j" % "1.2.14",
+  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
+  "com.hp.hpl.jena" % "jena" % "2.6.4",
+  "com.hp.hpl.jena" % "arq" % "2.8.8"
 )
+
 
 assemblySettings 
 

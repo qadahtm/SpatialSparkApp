@@ -1,6 +1,7 @@
 package queries
 
 import org.apache.spark._
+import org.apache.spark.SparkContext._
 import org.apache.spark.Logging
 import org.apache.spark.storage.StorageLevel
 import org.apache.log4j.{ Level, Logger }
@@ -9,32 +10,22 @@ object SparkJoin extends Logging {
 
   def main(args: Array[String]) = {
 
-    // BerlinMod Processing
-    val sparkConf = new SparkConf().setAppName("LocalWordCount")
+    val sparkConf = new SparkConf().setAppName("SparkReduce")
     val sc = new SparkContext(sparkConf)
+        
+    val maxCount = args(0).toInt
+    val numPartitions = args(1).toInt
+    val numSlice = args(2).toInt
     
-    val datafilepath = "/Users/qadahtm/Research/MM/Data/BerlinMOD_0_005_CSV_new/trips.csv"
-    val minPartitions = 4
-
-    val lines = sc.textFile(datafilepath, minPartitions)
+    val a = Array.tabulate(maxCount)(i => (1,i))
     
-    val startPoints = lines.flatMap(line => {
-      val arr = line.split(",")
-	      if (arr(0).length() == 1){
-	        Some((arr(2),(arr(4),arr(5))))
-	      }      
-	      else None      
-    })
+    val pa = sc.parallelize(a, numSlice)
     
-    val endPoints = lines.flatMap(line => {
-      val arr = line.split(",")
-	      if (arr(0).length() == 1){
-	        Some((arr(3),(arr(6),arr(7))))
-	      }      
-	      else None      
-    })
+    val out = pa.reduceByKey(_ + _, numPartitions).collect
     
-    println("")
-
+    println("SparkJoin: out size = " + out.size)
+    println("SparkJoin: Sum = " + out(0))
+ 
   }
 }
+

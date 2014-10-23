@@ -15,7 +15,8 @@ import akka.io.{ IO, Tcp }
 import java.net.InetSocketAddress
 import org.apache.log4j.Logger
 import akka.util.ByteString
-
+import akka.util.ByteStringBuilder
+import java.nio.charset.Charset
 
 /**
  * Testing Network controllers as the following example:
@@ -114,7 +115,7 @@ class NetworkSocketControllerServer(filepath: String, host: String, port: Int, c
       {
         val fs = scala.io.Source.fromFile(filepath).getLines
         val connection = sender()
-        val handler = context.actorOf(Props(classOf[SimplisticHandler], fs, count,period, connection))
+        val handler = context.actorOf(Props(classOf[SimplisticHandler], fs, count, period, connection))
         connection ! Register(handler)
         log.info("Connected to client at : " + remote.toString())
       }
@@ -126,8 +127,8 @@ class NetworkSocketControllerServer(filepath: String, host: String, port: Int, c
 
 class SimplisticHandler(fs: Iterator[String], count: Int, period: Int, remote: ActorRef) extends Actor with ActorLogging {
 
-//  lazy val fs = scala.io.Source.fromFile(filepath).getLines
-  fs.next // skipping hte first line
+  //  lazy val fs = scala.io.Source.fromFile(filepath).getLines
+  //  fs.next // skipping hte first line
   import Tcp._
 
   implicit val ec = context.system.dispatcher
@@ -135,23 +136,28 @@ class SimplisticHandler(fs: Iterator[String], count: Int, period: Int, remote: A
   val s = context.system.scheduler.schedule(0 seconds, period seconds) {
     self ! "sendout"
   }
-  
+
   def receive = {
     case Received(data) => { sender() ! Write(ByteString("Server: You should not send anything to me. Please don't do it again.\n")) }
     case PeerClosed => {
       log.info("Client Teminated")
       s.cancel
-      context stop self 
-      }
+      context stop self
+    }
 
     case "sendout" => {
       //      log.info("sending out")
-      for (i <- 1 to count) {
-        if (fs.hasNext) remote ! Write(ByteString(fs.next))
-        else {
-          log.info("EOF reached")
-          this.context.stop(self)
-        }
+      val bsb = new ByteStringBuilder()
+      var i = 0
+      while (fs.hasNext && i < count) {
+        bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("UTF-8")))
+        remote ! Write(bsb.result)
+        bsb.clear()
+        i = i + 1
+      }
+      if (!fs.hasNext) {
+        log.info("EOF reached")
+        this.context.stop(self)
       }
     }
   }

@@ -10,7 +10,7 @@ object SparkJoin extends Logging {
 
   def main(args: Array[String]) = {
 
-    val sparkConf = new SparkConf().setAppName("SparkReduce")
+   val sparkConf = new SparkConf().setAppName("SparkReduce")
     val sc = new SparkContext(sparkConf)
         
     val maxCount = args(0).toInt
@@ -22,10 +22,9 @@ object SparkJoin extends Logging {
     val pa = sc.parallelize(a, numSlice)
     
     val out = pa.reduceByKey(_ + _, numPartitions).collect
-    
+
     println("SparkJoin: out size = " + out.size)
-    println("SparkJoin: Sum = " + out(0))
- 
+    println("SparkJoin: Sum = " + out(0)) 
+
   }
 }
-

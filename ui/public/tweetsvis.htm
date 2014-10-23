@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { height: 100% }
+    </style>
+    
+    <link href="css/jquery-ui.min.css" rel="stylesheet">
+    <script type="text/javascript" src="js/jquery.js"></script>
+     <script type="text/javascript" src="js/jquery.json.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/portal.min.js"></script>
+
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUTsGEgrknzPi1xdS1NxH5quGucPmpZoA&v=3.exp&libraries=drawing"></script>
+
+    <script type="text/javascript">
+    
+   	var gmap = null;
+
+    var beforeColor = '#CF5656';
+    var afterColor = '#9BC150';
+
+    var polylines = [];
+
+    var drawingContext = {
+      rectangles:[],
+      rectangleMaxCount:1
+    };
+    var drawingManager = null;
+
+    var beforeRectOptions = {
+      clickable: true,
+      draggable:true,
+      editable:true,
+      fillColor: beforeColor, 
+      fillOpacity: 0.5,
+      strokeWeight: 5
+    };
+
+    // place holder object for the request
+    var request = {
+        mbr:null
+      };
+
+    var drawingOptions = {
+      drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: [
+          // google.maps.drawing.OverlayType.CIRCLE,
+          // google.maps.drawing.OverlayType.POLYGON,
+          google.maps.drawing.OverlayType.RECTANGLE
+        ]
+      },
+      rectangleOptions:beforeRectOptions
+    };
+
+
+var es; // event stream handle
+
+    
+      function initialize() {
+
+        var mapOptions = {
+        		//24.507052, 45.371521
+
+        		// berlin
+        		// 52.520190250694526&west=13.405380249023438&south=52.51914570999911&east=13.407440185546875 
+            // makkah : 22.473878, 40.121263
+          center: new google.maps.LatLng(22.473878, 40.121263),
+          zoom: 2
+        };
+        var map = new google.maps.Map(document.getElementById("map-canvas"),
+            mapOptions);
+        gmap = map;
+
+        drawingOptions.rectangleOptions = beforeRectOptions;
+
+      drawingManager = new google.maps.drawing.DrawingManager(drawingOptions);
+      drawingManager.addListener("rectanglecomplete",function(e){
+        // console.log("a rectangle is completed");
+        // console.log(e.getBounds());
+        // console.log("current count = "+drawingContext.rectangles.length);
+        if ((drawingContext.rectangles.length) == drawingContext.rectangleMaxCount){
+          // console.log("max count has reached which is "+drawingContext.rectangleMaxCount);
+          e.setMap(null);
+        }
+        else{
+          drawingContext.rectangles.push(e);  
+          e.addListener("bounds_changed",function(){
+            updateMBR(this);  
+          });
+          updateMBR(e);  
+        }
+
+      });
+
+      drawingManager.setMap(map);
+
+      }
+
+      function createMBR(rect){
+        return {
+          north:rect.getBounds().getNorthEast().lat(),
+          east:rect.getBounds().getNorthEast().lng(),
+          south:rect.getBounds().getSouthWest().lat(),
+          west:rect.getBounds().getSouthWest().lng()
+        };
+      }
+
+      // This function creates the MBR (spatial predicate) for the query
+      function updateMBR(rect){
+        request.mbr = {
+          north:rect.getBounds().getNorthEast().lat(),
+          west:rect.getBounds().getSouthWest().lng(),
+          south:rect.getBounds().getSouthWest().lat(),
+          east:rect.getBounds().getNorthEast().lng()
+        };        
+        console.log($.param(request.mbr));
+      }
+
+      var queries = [];
+      var inputpoints =[];
+      var trips =[];
+
+      var eventsources = [];
+
+      $(document).ready(function() {
+        // Intialize google maps
+    	  google.maps.event.addDomListener(window, 'load', initialize);
+
+        
+    	$("#openStream").click(function(event) {
+    		
+		 es = new EventSource("/twitter-stream");
+
+    	 es.onmessage = function(e) {
+    	 	var sse = $.parseJSON(e.data);
+    	 	//console.log("received an sse : "+$.toJSON(e.data));
+        // "{\"type\":\"inputTweets\",\"data\":{\"lng\":-70.936057,\"timestamp\":\"2014-10-01 21:24:16.000\",\"text\":\"@maggie_lydon lookin good 💙❤️🏈 http://t.co/wi2Cqi4AKQ\",\"id\":517485183193583618,\"lat\":42.042397}} "
+    	 	if (sse.type === "inputTweets"){
+    	 		var myLatlng = new google.maps.LatLng(sse.data.lat,sse.data.lng);
+    	 		var marker = new google.maps.Marker({
+				    position: myLatlng,
+				    map: gmap,
+				    title:sse.data.text
+				});
+    	 		markers.push(marker);    	 		
+
+    	 	}
+
+		 };
+
+		 eventsources.push(es);
+
+    	});
+
+    	$("#closeStream").click(function(event) {
+    		for (var i = eventsources.length - 1; i >= 0; i--) {
+    			var es = eventsources.pop();
+    			es.close();
+    		};
+    		//es.close();
+    	});
+
+        $("#clearDrawings").click(function(event) {
+          clearMap();
+        });
+
+   		});
+
+      var markers = [];
+
+      function clearMap(){
+        while (drawingContext.rectangles.length > 0){
+          drawingContext.rectangles.pop().setMap(null);
+        }
+        drawingOptions.rectangleOptions = beforeRectOptions;
+        drawingManager.setOptions(drawingOptions);
+        drawingManager.setMap(gmap);
+
+        // remove all polylines
+
+        while (polylines.length > 0){
+          polylines.pop().setMap(null);
+        }
+
+
+      }
+      
+    </script>
+  </head>
+  <body>
+  	<div style="position:absolute;width:100px;height:100%;z-index:5; overflow:scroll;">
+  	
+    <div><button id="clearDrawings">Clear Drawings</button></div>
+
+    <div><button id="openStream">Open Stream</button></div>
+
+    <div><button id="closeStream">Close Stream</button></div>
+  	
+  	
+  	<div style="position:relative" id="clist"></div>
+	</div>
+    <div id="map-canvas" style="poistion:absolute;left:101px;z-index:0; width:960px;"></div>
+  </body>
+</html>

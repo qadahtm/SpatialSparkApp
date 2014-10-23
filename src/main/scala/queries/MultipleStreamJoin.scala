@@ -19,6 +19,10 @@ import scala.collection.mutable.ArrayBuffer
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
+import utils.MObject
+import utils.RangeQuery
+import utils.SObject
+import utils.Helper
 
 object MultipleStreamJoinKafka extends App with Logging {
   
@@ -56,7 +60,7 @@ object MultipleStreamJoinKafka extends App with Logging {
 	    Point2D(parr(0).toDouble,parr(1).toDouble)
 	  })	  
 	  
-	  (1,RangeQuery(qid,regionPoints))})
+	  (1,RangeQuery(qid,regionPoints, DateTime.now().getMillis()))})
 	  
   // BerlinMod data processing
  
@@ -118,7 +122,7 @@ object MultipleStreamJoinKafka extends App with Logging {
   
   val output = locationUpdates.join(queryList).flatMap{
     case (_,(p,q)) => {
-    	if (q.isInsideRange(p._2)){
+    	if (q.isInsideRange(p._2.sobj)){
     	  Some("QueryID = "+q.qid+", ObjectID = "+p._1)
     	}
     	else None
@@ -198,7 +202,7 @@ object MultipleStreamJoinNetwork extends App with Logging {
 	    Point2D(parr(0).toDouble,parr(1).toDouble)
 	  })	  
 	  
-	  (1,RangeQuery(qid,regionPoints))})
+	  (1,RangeQuery(qid,regionPoints, DateTime.now().getMillis()))})
 	  
   // BerlinMod data processing
  
@@ -260,7 +264,7 @@ object MultipleStreamJoinNetwork extends App with Logging {
   
   val output = locationUpdates.join(queryList).flatMap{
     case (_,(p,q)) => {
-    	if (q.isInsideRange(p._2)){
+    	if (q.isInsideRange(p._2.sobj)){
     	  Some("QueryID = "+q.qid+", ObjectID = "+p._1)
     	}
     	else None
@@ -274,87 +278,4 @@ object MultipleStreamJoinNetwork extends App with Logging {
   ssc.awaitTermination()
   
   
-}
-
-
-
-object Helper {
-  def createKafkaProducer() = {
-    val props = new java.util.Properties()
-    props.put("metadata.broker.list", "localhost:9092")
-    props.put("serializer.class", "kafka.serializer.StringEncoder")
-    props.put("request.required.acks", "1")
-
-    val pconfig = new ProducerConfig(props)
-    (new Producer[String, String](pconfig))
-  }
-  
-}
-
-case class SObject(val id: Long, val x: Double, val y: Double) {
-
-  override def toString() = {
-    "{ \"id\" " + id + " , \"x\":" + x + ", \"y\":" + y + "}"
-  }
-
-  override def equals(o: Any) = o match {
-    case that: SObject => that.id.equals(this.id)
-    case _ => false
-  }
-
-}
-
-case class MObject(val t: DateTime, sobj: SObject) {
-  override def toString() = {
-    "{ \"timestamp\"" + t + ", \"sobj\" : " + sobj + "}"
-  }
-
-  override def equals(o: Any) = o match {
-    case that: MObject => that.sobj.id.equals(this.sobj.id) && that.t.equals(this.t)
-    case _ => false
-  }
-}
-
-trait Query extends Serializable
-
-class QueryProcessingContext() {
-  val _queries = ArrayBuffer[Query]()
-
-  def addQuery(q: Query) = {
-    _queries += q
-  }
-}
-
-case class RangeQuery(val qid: String, val points: Array[Point2D]) extends Query {
-
-  val insidePoints = ArrayBuffer[MObject]()
-  override def toString() = {
-    "{\"QueryID\":" + qid + " }"
-  }
-
-  def alreadyInside(p: MObject): Boolean = { // linear search , can be improved. 
-    val in = insidePoints.filter(_ == p)
-    (in.size > 0)
-  }
-
-  def isInsideRange(p: MObject): Boolean = {
-    var res = alreadyInside(p)
-    if (!res) res = _contains(p)
-    res
-  }
-
-  private def _contains(mo: MObject): Boolean = {
-    if (points.size == 2) // Box
-    {
-      val northwest = points(0)
-      val southeast = points(1)
-      val p = mo.sobj
-      val res = (p.x <= northwest.x && p.x >= southeast.x && p.y >= northwest.y && p.y <= southeast.y)
-      if (res) insidePoints += mo
-      res
-    } else {
-      // multi point region
-      false
-    }
-  }
 }

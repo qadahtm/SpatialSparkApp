@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { height: 100% }
+    </style>
+    
+    <link href="css/jquery-ui.min.css" rel="stylesheet">
+    <script type="text/javascript" src="js/jquery.js"></script>
+     <script type="text/javascript" src="js/jquery.json.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/portal.min.js"></script>
+
+    <script type="text/javascript">
+   
+      var eventsources = [];
+
+      $(document).ready(function() {
+        
+        
+    	var es = new EventSource("/output-stream");
+
+       es.onmessage = function(e) {
+
+        var sse = $.parseJSON(e.data);
+        // console.log("received an sse : "+$.toJSON(e.data)); 
+
+        if (sse.type === "output"){
+          // console.log("content: "+sse.data);
+          $("#sparkStreamingOutput").append('<p>'+sse.data+'</p>');
+        }
+
+     };
+
+     eventsources.push(es);
+
+      });
+      
+    </script>
+  </head>
+  <body>
+  	<div style="overflow:scroll;" id="sparkStreamingOutput"></div>    
+  </body>
+</html>

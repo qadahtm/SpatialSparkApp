@@ -17,18 +17,21 @@
 
 //package org.apache.spark.examples.streaming
 
+package queries
+
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.storage.StorageLevel
-
-
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 
 
 
 object Range extends Serializable {
 
-
+    Logger.getLogger("org").setLevel(Level.WARN)
+    Logger.getLogger("akka").setLevel(Level.WARN)
 
   def main(args: Array[String]) {
     if (args.length < 2) {

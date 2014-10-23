@@ -112,8 +112,9 @@ class NetworkSocketControllerServer(filepath: String, host: String, port: Int, c
 
     case c @ Connected(remote, local) =>
       {
+        val fs = scala.io.Source.fromFile(filepath).getLines
         val connection = sender()
-        val handler = context.actorOf(Props(classOf[SimplisticHandler], filepath, count,period, connection))
+        val handler = context.actorOf(Props(classOf[SimplisticHandler], fs, count,period, connection))
         connection ! Register(handler)
         log.info("Connected to client at : " + remote.toString())
       }
@@ -123,9 +124,9 @@ class NetworkSocketControllerServer(filepath: String, host: String, port: Int, c
 
 }
 
-class SimplisticHandler(filepath: String, count: Int, period: Int, remote: ActorRef) extends Actor with ActorLogging {
+class SimplisticHandler(fs: Iterator[String], count: Int, period: Int, remote: ActorRef) extends Actor with ActorLogging {
 
-  lazy val fs = scala.io.Source.fromFile(filepath).getLines
+//  lazy val fs = scala.io.Source.fromFile(filepath).getLines
   fs.next // skipping hte first line
   import Tcp._
 
@@ -136,7 +137,7 @@ class SimplisticHandler(filepath: String, count: Int, period: Int, remote: Actor
   }
   
   def receive = {
-    case Received(data) => { sender() ! Write(ByteString("Server: " + data.decodeString("UTF-8") + s" $filepath $count \n")) }
+    case Received(data) => { sender() ! Write(ByteString("Server: You should not send anything to me. Please don't do it again.\n")) }
     case PeerClosed => {
       log.info("Client Teminated")
       s.cancel

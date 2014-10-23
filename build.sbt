@@ -11,7 +11,8 @@ packSettings
 seq(
         // [Optional] Specify mappings from program name -> Main class (full package path)
         packMain := Map(
-        "WebServer" -> "ui.Webserver"              
+        "WebServer" -> "ui.Webserver"
+        ,"StreamConroller" -> "utils.StreamController"    
 	),
         // Add custom settings here
         // [Optional] JVM options of scripts (program name -> Seq(JVM option, ...))

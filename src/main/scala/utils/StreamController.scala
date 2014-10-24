@@ -17,6 +17,7 @@ import org.apache.log4j.Logger
 import akka.util.ByteString
 import akka.util.ByteStringBuilder
 import java.nio.charset.Charset
+import java.nio.charset.MalformedInputException
 
 /**
  * Testing Network controllers as the following example:
@@ -150,11 +151,26 @@ class SimplisticHandler(fs: Iterator[String], count: Int, period: Int, remote: A
       val bsb = new ByteStringBuilder()
       var i = 0
       while (fs.hasNext && i < count) {
-        bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("UTF-8")))
+        try {
+          bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("US-ASCII")))
+        }
+        catch {
+          case e:MalformedInputException => {
+            try {
+              bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("ISO-8859-1")))
+            }
+            catch {
+              case e:MalformedInputException =>{
+                bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("UTF-8")))
+              }
+            }
+          }
+        }
         remote ! Write(bsb.result)
         bsb.clear()
         i = i + 1
       }
+      
       if (!fs.hasNext) {
         log.info("EOF reached")
         this.context.stop(self)

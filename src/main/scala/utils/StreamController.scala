@@ -114,7 +114,7 @@ class NetworkSocketControllerServer(filepath: String, host: String, port: Int, c
 
     case c @ Connected(remote, local) =>
       {
-        val fs = scala.io.Source.fromFile(filepath).getLines
+        val fs = scala.io.Source.fromFile(filepath,"UTF-8").getLines
         val connection = sender()
         val handler = context.actorOf(Props(classOf[SimplisticHandler], fs, count, period, connection))
         connection ! Register(handler)
@@ -151,21 +151,7 @@ class SimplisticHandler(fs: Iterator[String], count: Int, period: Int, remote: A
       val bsb = new ByteStringBuilder()
       var i = 0
       while (fs.hasNext && i < count) {
-        try {
-          bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("US-ASCII")))
-        }
-        catch {
-          case e:MalformedInputException => {
-            try {
-              bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("ISO-8859-1")))
-            }
-            catch {
-              case e:MalformedInputException =>{
-                bsb.putBytes((fs.next + "\n").getBytes(Charset.forName("UTF-8")))
-              }
-            }
-          }
-        }
+        bsb.putBytes((fs.next + "\n").getBytes())
         remote ! Write(bsb.result)
         bsb.clear()
         i = i + 1

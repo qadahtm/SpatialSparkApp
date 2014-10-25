@@ -3,6 +3,8 @@ SpatialSparkApp
 
 ## Update
 
+This branch will contain the Webserver component. If you in need to test your application with the web server locally you will want to to use this branch. The master branch will no longer have this component to minimize dependency conflicts. 
+
 Now we have a bit more cleaned up build.sbt file. In addition, we have lancher sbt file. This is a shell script that will download sbt if not installed on the machine so that we can have the master branch ready for execution on any machine regardless if SBT is installed or not. 
 
 ## Introduction

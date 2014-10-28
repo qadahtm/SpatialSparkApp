@@ -183,12 +183,12 @@ object Range extends Serializable {
 
       JsObject(
         "id1" -> JsNumber(f._1.ID.toLong),
-        "lat1" -> JsNumber(f._1.location.y.toDouble),
-        "lng1" -> JsNumber(f._1.location.x.toDouble),
+        "lat1" -> JsNumber(f._1.location.x.toDouble),
+        "lng1" -> JsNumber(f._1.location.y.toDouble),
         "text1" -> JsString(sb1.toString),
         "id2" -> JsNumber(f._1.ID.toLong),
-        "lat2" -> JsNumber(f._2.location.y.toDouble),
-        "lng2" -> JsNumber(f._2.location.x.toDouble),
+        "lat2" -> JsNumber(f._2.location.x.toDouble),
+        "lng2" -> JsNumber(f._2.location.y.toDouble),
         "text2" -> JsString(sb2.toString),
         "mdetails" -> JsString(f._3)).toString
     })

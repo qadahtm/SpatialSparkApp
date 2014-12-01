@@ -13,6 +13,8 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "1.1.0" %  "provided",
+  "org.apache.spark" %% "spark-sql" % "1.1.0" %  "provided",
+  "org.apache.spark" %% "spark-catalyst" % "1.1.0" %  "provided",
   "org.apache.spark" %% "spark-streaming-kafka" % "1.1.0" %  "provided",
   "org.apache.spark" %% "spark-streaming-twitter" % "1.1.0" %  "provided",
   "joda-time"		    % "joda-time" 		% "latest.integration",

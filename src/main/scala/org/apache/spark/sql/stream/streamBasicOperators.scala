@@ -37,7 +37,7 @@ case class Filter(condition: Expression, child: StreamPlan) extends UnaryNode {
   def output = child.output
 }
 
-case class Sample(fraction: Double, withReplacement: Boolean, seed: Int, child: StreamPlan)
+case class Sample(fraction: Double, withReplacement: Boolean, seed: Long, child: StreamPlan)
   extends UnaryNode {
   lazy val sparkPlan = execution.Sample(fraction, withReplacement, seed, child.sparkPlan)
   def output = child.output
@@ -46,7 +46,7 @@ case class Sample(fraction: Double, withReplacement: Boolean, seed: Int, child: 
 case class Union(children: Seq[StreamPlan])(@transient ssc: StreamingContext)
   extends StreamPlan {
   // TODO.??? have some semantic difference, has two dependencies
-  lazy val sparkPlan = execution.Union(children.map(_.sparkPlan))(ssc.sparkContext)
+  lazy val sparkPlan = execution.Union(children.map(_.sparkPlan)) //(ssc.sparkContext)
 
   def output = children.head.output
   def execute() = ssc.union(children.map(_.execute()))
@@ -56,7 +56,7 @@ case class Union(children: Seq[StreamPlan])(@transient ssc: StreamingContext)
 
 case class Limit(limit: Int, child: StreamPlan)(@transient ssc: StreamingContext)
   extends UnaryNode {
-  lazy val sparkPlan = execution.Limit(limit, child.sparkPlan)(ssc.sparkContext)
+  lazy val sparkPlan = execution.Limit(limit, child.sparkPlan) //(ssc.sparkContext)
   override def otherCopyArgs = ssc :: Nil
 
   def output = child.output
@@ -64,7 +64,7 @@ case class Limit(limit: Int, child: StreamPlan)(@transient ssc: StreamingContext
 
 case class TakeOrdered(limit: Int, sortOrder: Seq[SortOrder], child: StreamPlan)
     (@transient ssc: StreamingContext) extends UnaryNode {
-  lazy val sparkPlan = execution.TakeOrdered(limit, sortOrder, child.sparkPlan)(ssc.sparkContext)
+  lazy val sparkPlan = execution.TakeOrdered(limit, sortOrder, child.sparkPlan) //(ssc.sparkContext)
   override def otherCopyArgs = ssc :: Nil
 
   def output = child.output
@@ -85,9 +85,9 @@ case class Sort(
   def output = child.output
 }
 
-case class ExistingDStream(output: Seq[Attribute], dstream: DStream[Row]) extends LeafNode {
-  val sparkPlan = execution.ExistingRdd(output, null)
-  def execute() = dstream.transform { r => sparkPlan.rdd = r; r }
+case class ExistingDStream(output: Seq[Attribute], dstream: DStream[Row]) extends LeafNode {	
+  val sparkPlan = MutableExistingRdd(output, null)
+  def execute() = dstream.transform { r => sparkPlan.rdd = r;r }
 }
 
 object ExistingDStream {

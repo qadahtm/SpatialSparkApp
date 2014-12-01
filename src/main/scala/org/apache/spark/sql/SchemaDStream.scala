@@ -20,12 +20,12 @@ package org.apache.spark.sql
 import org.apache.spark.streaming.Time
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
-
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.{Inner, JoinType}
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.streaming.DStreamWrapper
 
 class SchemaDStream(
     @transient val streamSqlContext: StreamSQLContext,
@@ -40,7 +40,8 @@ class SchemaDStream(
   override def slideDuration = queryExecution.toDStream.slideDuration
 
   override def compute(validTime: Time): Option[RDD[Row]] = {
-    queryExecution.toDStream.getOrCompute(validTime).map(_.map(_.copy()))
+    //TODO find another way
+    DStreamWrapper(queryExecution.toDStream).getOrCompute(validTime).map(_.map(_.copy()))
   }
 
 

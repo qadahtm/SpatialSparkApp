@@ -31,7 +31,7 @@ case class StreamAggregate(
   extends UnaryNode {
 
   lazy val sparkPlan = execution.Aggregate(partial, groupingExpressions,
-    aggregateExpressions, child.sparkPlan)(ssc.sparkContext)
+    aggregateExpressions, child.sparkPlan)
 
   override def otherCopyArgs = ssc :: Nil
 

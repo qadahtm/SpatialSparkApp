@@ -26,7 +26,7 @@ object MultiplePredicates {
     val streamSqlContext = new StreamSQLContext(ssc)
 
     // Create an DStream of Person objects and register it as a stream.
-    val tweets: DStream[Tweet] = ssc.socketTextStream("ibnalhaytham.cs.purdue.edu", 1234).map(_.split(",")).map(p => Tweet(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4),p(5)))
+    val tweets: DStream[Tweet] = ssc.socketTextStream("localhost", 1234).map(_.split(",")).map(p => Tweet(p(0), p(1),p(2).toDouble,p(3).toDouble,p(4),p(5)))
     val x  = streamSqlContext.createSchemaDStream(tweets)
     x.registerAsStream("tweets")
 
@@ -39,7 +39,7 @@ object MultiplePredicates {
         "geo_lat,geo_long,tweet_text " +
         "FROM tweets " +
         "WHERE " +
-        "tweet_text LIKE '%game%' AND " +
+//        "tweet_text LIKE '%game%' AND " +
         "((41.952405 >= geo_lat AND geo_lat >= 32.788501) AND (-114.038086 >= geo_long AND geo_long >= -124.233398))" +
         "")
 

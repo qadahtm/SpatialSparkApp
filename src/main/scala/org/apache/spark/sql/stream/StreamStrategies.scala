@@ -18,64 +18,62 @@
 package org.apache.spark.sql.stream
 
 import org.apache.spark.streaming.dstream.ConstantInputDStream
-
 import org.apache.spark.sql.{StreamSQLContext, stream}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.planning._
 import org.apache.spark.sql.catalyst.plans._
-import org.apache.spark.sql.catalyst.plans.logical.{BaseRelation, LogicalPlan}
 import org.apache.spark.sql.catalyst.plans.physical._
 import org.apache.spark.sql.execution.{BuildRight, SparkLogicalPlan}
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 abstract class StreamStrategies extends QueryPlanner[StreamPlan] {
   self: StreamSQLContext#StreamPlanner =>
 
-  object HashJoin extends Strategy {
-    def apply(plan: LogicalPlan): Seq[StreamPlan] = plan match {
-      case FilteredOperation(predicates, logical.Join(left, right, Inner, condition)) =>
-        logger.debug(s"Considering join: ${predicates ++ condition}")
-        // Find equi-join predicates that can be evaluated before the join, and thus can be used
-        // as join keys. Note we can only mix in the conditions with other predicates because the
-        // match above ensures that this is and Inner join.
-        val (joinPredicates, otherPredicates) = (predicates ++ condition).partition {
-          case Equals(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
-                               (canEvaluate(l, right) && canEvaluate(r, left)) => true
-          case _ => false
-        }
-
-        val joinKeys = joinPredicates.map {
-          case Equals(l,r) if canEvaluate(l, left) && canEvaluate(r, right) => (l, r)
-          case Equals(l,r) if canEvaluate(l, right) && canEvaluate(r, left) => (r, l)
-        }
-
-        // Do not consider this strategy if there are no join keys.
-        if (joinKeys.nonEmpty) {
-          val leftKeys = joinKeys.map(_._1)
-          val rightKeys = joinKeys.map(_._2)
-
-          val joinOp = stream.StreamHashJoin(
-            leftKeys, rightKeys, BuildRight, planLater(left), planLater(right))
-
-          // Make sure other conditions are met if present.
-          if (otherPredicates.nonEmpty) {
-            stream.Filter(combineConjunctivePredicates(otherPredicates), joinOp) :: Nil
-          } else {
-            joinOp :: Nil
-          }
-        } else {
-          logger.debug(s"Avoiding spark join with no join keys.")
-          Nil
-        }
-      case _ => Nil
-    }
-
-    private def combineConjunctivePredicates(predicates: Seq[Expression]) =
-      predicates.reduceLeft(And)
-
-    /** Returns true if `expr` can be evaluated using only the output of `plan`. */
-    protected def canEvaluate(expr: Expression, plan: LogicalPlan): Boolean =
-      expr.references subsetOf plan.outputSet
-  }
+//  object HashJoin extends Strategy {
+//    def apply(plan: LogicalPlan): Seq[StreamPlan] = plan match {
+//      case FilteredOperation(predicates, logical.Join(left, right, Inner, condition)) =>
+////        logger.debug(s"Considering join: ${predicates ++ condition}")
+//        // Find equi-join predicates that can be evaluated before the join, and thus can be used
+//        // as join keys. Note we can only mix in the conditions with other predicates because the
+//        // match above ensures that this is and Inner join.
+//        val (joinPredicates, otherPredicates) = (predicates ++ condition).partition {
+//          case Equals(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
+//                               (canEvaluate(l, right) && canEvaluate(r, left)) => true
+//          case _ => false
+//        }
+//
+//        val joinKeys = joinPredicates.map {
+//          case Equals(l,r) if canEvaluate(l, left) && canEvaluate(r, right) => (l, r)
+//          case Equals(l,r) if canEvaluate(l, right) && canEvaluate(r, left) => (r, l)
+//        }
+//
+//        // Do not consider this strategy if there are no join keys.
+//        if (joinKeys.nonEmpty) {
+//          val leftKeys = joinKeys.map(_._1)
+//          val rightKeys = joinKeys.map(_._2)
+//
+//          val joinOp = stream.StreamHashJoin(
+//            leftKeys, rightKeys, BuildRight, planLater(left), planLater(right))
+//
+//          // Make sure other conditions are met if present.
+//          if (otherPredicates.nonEmpty) {
+//            stream.Filter(combineConjunctivePredicates(otherPredicates), joinOp) :: Nil
+//          } else {
+//            joinOp :: Nil
+//          }
+//        } else {
+////          logger.debug(s"Avoiding spark join with no join keys.")
+//          Nil
+//        }
+//      case _ => Nil
+//    }
+//    private def combineConjunctivePredicates(predicates: Seq[Expression]) =
+//      predicates.reduceLeft(And)
+//
+//    /** Returns true if `expr` can be evaluated using only the output of `plan`. */
+//    protected def canEvaluate(expr: Expression, plan: LogicalPlan): Boolean =
+//      expr.references subsetOf plan.outputSet
+//  }
 
   object PartialAggregation extends Strategy {
     def apply(plan: LogicalPlan): Seq[StreamPlan] = plan match {
@@ -134,8 +132,9 @@ abstract class StreamStrategies extends QueryPlanner[StreamPlan] {
   object BroadcastNestedLoopJoin extends Strategy {
     def apply(plan: LogicalPlan): Seq[StreamPlan] = plan match {
       case logical.Join(left, right, joinType, condition) =>
+        
         stream.StreamBroadcastNestedLoopJoin(
-          planLater(left), planLater(right), joinType, condition)(streamingContext) :: Nil
+          planLater(left), planLater(right), BuildRight, joinType, condition)(streamingContext) :: Nil
       case _ => Nil
     }
   }
@@ -213,8 +212,6 @@ abstract class StreamStrategies extends QueryPlanner[StreamPlan] {
         stream.StreamExchange(HashPartitioning(expressions, numPartitions),
           planLater(child)) :: Nil
       case StreamLogicalPlan(existingPlan) => existingPlan :: Nil
-      case t: BaseRelation if (t.isStream == false) =>
-        sparkPlanWrapper(t) :: Nil
       case t @ SparkLogicalPlan(sparkPlan) => sparkPlanWrapper(t) :: Nil
       case _ => Nil
     }

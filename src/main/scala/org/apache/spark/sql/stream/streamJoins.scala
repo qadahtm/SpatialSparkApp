@@ -18,10 +18,10 @@
 package org.apache.spark.sql.stream
 
 import org.apache.spark.streaming.StreamingContext
-
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.execution
+import org.apache.spark.sql.execution.BuildSide
 
 case class StreamHashJoin(
     leftKeys: Seq[Expression],
@@ -31,7 +31,7 @@ case class StreamHashJoin(
     right: StreamPlan)
   extends BinaryNode {
 
-  lazy val sparkPlan = execution.HashJoin(leftKeys, rightKeys, buildSide, left.sparkPlan,
+  lazy val sparkPlan = execution.ShuffledHashJoin(leftKeys, rightKeys, buildSide, left.sparkPlan,
     right.sparkPlan)
 
   def output = left.output ++ right.output
@@ -50,6 +50,7 @@ case class StreamCartesianProduct(
 case class StreamBroadcastNestedLoopJoin(
     streamed: StreamPlan,
     broadcast: StreamPlan,
+    buildSide:BuildSide,
     joinType: JoinType,
     condition: Option[Expression])(@transient ssc: StreamingContext)
   extends  BinaryNode {
@@ -57,8 +58,8 @@ case class StreamBroadcastNestedLoopJoin(
   def left = streamed
   def right = broadcast
 
-  lazy val sparkPlan = execution.BroadcastNestedLoopJoin(streamed.sparkPlan, broadcast.sparkPlan,
-    joinType, condition)(ssc.sparkContext)
+  lazy val sparkPlan = execution.BroadcastNestedLoopJoin(streamed.sparkPlan, broadcast.sparkPlan, 
+      buildSide,joinType, condition)
 
   def output = left.output ++ right.output
 

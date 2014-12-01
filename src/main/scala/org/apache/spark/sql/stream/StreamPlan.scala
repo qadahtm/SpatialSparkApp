@@ -19,13 +19,13 @@ package org.apache.spark.sql.stream
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
-
-import org.apache.spark.sql.{Logging, Row}
+import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.plans.QueryPlan
 import org.apache.spark.sql.catalyst.plans.logical
 import org.apache.spark.sql.catalyst.plans.physical._
 import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.catalyst.expressions.Row
 
 abstract class StreamPlan extends QueryPlan[StreamPlan] with Logging {
   self: Product =>

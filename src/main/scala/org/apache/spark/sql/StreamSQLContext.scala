@@ -18,15 +18,15 @@
 package org.apache.spark.sql
 
 import scala.reflect.runtime.universe._
-
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.dsl
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
 import org.apache.spark.sql.stream._
+import org.apache.spark.Logging
+import org.apache.spark.sql.catalyst.expressions.BindReferences
 
 class StreamSQLContext(@transient val streamingContext: StreamingContext)
   extends Logging
@@ -61,7 +61,7 @@ class StreamSQLContext(@transient val streamingContext: StreamingContext)
     val strategies: Seq[Strategy] =
       TakeOrdered ::
       PartialAggregation ::
-      HashJoin ::
+     // HashJoin ::
       BasicOperators ::
       CartesianProduct ::
       BroadcastNestedLoopJoin :: Nil
@@ -96,7 +96,8 @@ class StreamSQLContext(@transient val streamingContext: StreamingContext)
   protected[sql] val prepareForExecution = new RuleExecutor[StreamPlan] {
     val batches =
       Batch("Add exchange", Once, AddExchange) ::
-      Batch("Prepare Expressions", Once, new BindReferences[StreamPlan]) :: Nil
+//      Batch("Prepare Expressions", Once, new BindReferences[StreamPlan]) :: 
+      Nil
   }
 
   protected abstract class QueryExecution {
